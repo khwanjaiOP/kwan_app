@@ -1,10 +1,12 @@
 import 'package:get/get.dart';
+import 'package:kwan_app/controllers/auth_controller.dart';
 import 'package:kwan_app/models/todo_model.dart';
 import 'package:kwan_app/services/storage_service.dart';
 
 class TodoController extends GetxController {
   var todoList = <TodoModel>[].obs;
   StorageService storageService = StorageService();
+  AuthController authController = Get.put(AuthController());
 
   @override
   void onInit(){
@@ -12,35 +14,51 @@ class TodoController extends GetxController {
     fetchTodos();
   }
 
-  void fetchTodos() async {
-    var todos = await storageService.read('todoList');
-    if(todos != null){
+  Future<void> fetchTodos() async {
+    var todos = await storageService.read(
+      'todoList',
+      authController.user.value?.uid ?? '',
+    );
+    if (todos != null) {
       todoList.value = List<TodoModel>.from(
-        todos.map((x) => TodoModel.fromJson(x))
+        todos.map((x) => TodoModel.fromJson(x)),
       );
     }
   }
-
-  void addTodo(
-    String title,
-    String description,
-    ) {
-      todoList.add(TodoModel(
-        title: title,
-        description: description,
-        isDone: false,
-      ));
-      storageService.write('todos', todoList.toJson());
+ 
+  Future<void> addTodo(String title, String subtitle) async {
+    TodoModel todo = TodoModel(
+      title,
+      subtitle,
+      false,
+      uid: authController.user.value?.uid,
+    );
+    String docId = await storageService.write('todoList', todo.toJson());
+    todo.docId = docId;
+    todoList.add(todo);
+  }
+    Future<void> updateTodo(TodoModel todo) async{
+      todoList.firstWhere((todo) => todo.docId == todo.docId).title;
+      todoList.firstWhere((todo) => todo.docId == todo.docId).description;
+      todoList.refresh();
+      await storageService.update('todoList', todo.docId??'', todo.toJson());
     }
 
     void toggelTodo(int index){
       todoList[index].isDone = !todoList[index].isDone;
       todoList.refresh();
-      update();
+      storageService.update('todoList', todoList[index].docId??'',{
+        'isDone':todoList[index].isDone,
+      });
     }
 
-    void removeTodo(int index){
-      todoList.removeAt(index);
-      storageService.write('todos', todoList.toJson());
+    void removeTodo(String  docId){
+      todoList.removeWhere((todo) => todo.docId == docId );
+      storageService.delete('todoList', docId);
+    }
+
+    void clearTodo(){
+      todoList.clear();
+      
     }
 }

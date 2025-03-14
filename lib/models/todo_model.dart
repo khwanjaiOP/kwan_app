@@ -2,24 +2,34 @@ class TodoModel {
   String title;
   String description;
   bool isDone;
-  
 
-  TodoModel({
-    required this.title,
-    required this.description,
-    required this.isDone,
-    
-  });
+  String? uid;
+  String? docId;
+
+
+  TodoModel(
+    this.title,
+    this.description,
+    this.isDone,
+    {
+    this.uid,
+    this.docId,
+    }
+  );
   Map<String, dynamic> toJson() {
     return {
       'title': title,
       'description': description,
       'isDone': isDone,
+      'uid': uid,
+      'docId': docId,
     };
   }
 
   TodoModel.fromJson(Map<String, dynamic> json)
       : title = json['title'],
         description = json['description'],
-        isDone = json['isDone'];
+        isDone = json['isDone'],
+        uid = json['uid'],
+        docId = json['docId'];
 }
